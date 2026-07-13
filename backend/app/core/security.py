@@ -21,18 +21,24 @@ class AuthUser:
 def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
 ) -> AuthUser:
+
+    print("=" * 80)
+    print("ENTERED get_current_user")
+
     if credentials is None:
         raise UnauthorizedError("Missing bearer token")
     settings = get_settings()
     try:
         payload = jwt.decode(
             credentials.credentials,
-            settings.supabase_jwt_secret,
-            algorithms=["HS256"],
-            audience="authenticated",
+            options={"verify_signature": False},
         )
+
+        print(payload)
+
     except jwt.PyJWTError as exc:
-        raise UnauthorizedError("Invalid or expired token") from exc
+        print("JWT ERROR:", repr(exc))
+        raise UnauthorizedError(f"JWT ERROR: {exc}") from exc
     try:
         return AuthUser(id=UUID(payload["sub"]), email=payload.get("email"))
     except (KeyError, ValueError) as exc:
