@@ -1,0 +1,29 @@
+# Environments & secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# Node
+node_modules/
+frontend/dist/
+
+# Tooling
+.vscode/
+.idea/
+.DS_Store
+
+# Playwright
+tests/e2e/test-results/
+tests/e2e/playwright-report/

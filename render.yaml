@@ -1,0 +1,28 @@
+# Render blueprint — deploys the FastAPI backend as a Docker service.
+# Secrets are set in the Render dashboard (sync: false), never committed.
+services:
+  - type: web
+    name: meetiq-api
+    runtime: docker
+    rootDir: backend
+    plan: starter
+    healthCheckPath: /healthz
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: FRONTEND_ORIGIN
+        sync: false # e.g. https://meetiq.vercel.app
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: TRANSCRIPTION_PROVIDER
+        value: deepgram
+      - key: DEEPGRAM_API_KEY
+        sync: false
