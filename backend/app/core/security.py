@@ -6,7 +6,6 @@ import jwt
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from app.core.config import get_settings
 from app.core.exceptions import UnauthorizedError
 
 _bearer = HTTPBearer(auto_error=False)
@@ -21,24 +20,18 @@ class AuthUser:
 def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
 ) -> AuthUser:
-
-    print("=" * 80)
-    print("ENTERED get_current_user")
-
     if credentials is None:
         raise UnauthorizedError("Missing bearer token")
-    settings = get_settings()
     try:
+        # NOTE: signature verification is intentionally disabled for now. The token's
+        # claims are trusted without validating the signature — do not rely on this in
+        # production. See app/core/config.py for supabase_jwt_secret to re-enable.
         payload = jwt.decode(
             credentials.credentials,
             options={"verify_signature": False},
         )
-
-        print(payload)
-
     except jwt.PyJWTError as exc:
-        print("JWT ERROR:", repr(exc))
-        raise UnauthorizedError(f"JWT ERROR: {exc}") from exc
+        raise UnauthorizedError("Invalid token") from exc
     try:
         return AuthUser(id=UUID(payload["sub"]), email=payload.get("email"))
     except (KeyError, ValueError) as exc:

@@ -65,7 +65,6 @@ async def generate_structured(
     """Structured generation with bounded validation-feedback retries."""
     settings = get_settings()
     model = model or settings.gemini_agent_model
-    client = get_client()
     attempt_prompt = prompt
     last_error: Exception | None = None
 

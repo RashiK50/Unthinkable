@@ -9,7 +9,6 @@ import json
 import operator
 from collections.abc import Awaitable, Callable
 from typing import Annotated, Any, TypedDict
-import traceback    
 
 import structlog
 from langgraph.graph import END, START, StateGraph
@@ -55,38 +54,20 @@ class PipelineState(TypedDict, total=False):
 NodeFn = Callable[[PipelineState], Awaitable[dict[str, Any]]]
 
 
-import traceback
-
 def _wrap(name: str, fn: NodeFn, recorder: EventRecorder, fallback: NodeFn | None = None) -> NodeFn:
     """Uniform node behavior: events around execution, errors captured not raised."""
 
     async def node(state: PipelineState) -> dict[str, Any]:
         await recorder(name, "started", None)
-
         try:
             result = await fn(state)
             await recorder(name, "succeeded", None)
             return result
-
         except Exception as exc:  # degrade, don't fail the meeting
-            print("\n" + "=" * 80)
-            print(f"FAILED AGENT: {name}")
-            print("=" * 80)
-            traceback.print_exc()
-            print("=" * 80 + "\n")
-
-            logger.exception("agent_failed", agent=name)
-
+            logger.warning("agent_failed", agent=name, error=str(exc))
             await recorder(name, "failed", str(exc)[:500])
-
             result = await fallback(state) if fallback else {}
-
-            return {
-                **result,
-                "agent_errors": {
-                    name: str(exc)[:500]
-                },
-            }
+            return {**result, "agent_errors": {name: str(exc)[:500]}}
 
     return node
 

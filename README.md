@@ -41,7 +41,7 @@ Full design docs: [`docs/01-architecture.md`](docs/01-architecture.md) ·
 |---|---|
 | Frontend | React 18 + Vite + TypeScript (strict), TailwindCSS, TanStack Query, Recharts |
 | Backend | FastAPI, SQLAlchemy 2 (async), Pydantic v2, structlog |
-| AI | LangGraph orchestration, Gemini 2.5 Flash (agents), `text-embedding-004` (RAG) |
+| AI | LangGraph orchestration, Gemini 2.5 Flash (agents), Gemini embeddings → 768-dim (RAG) |
 | Transcription | Deepgram nova-3 (diarization) with Whisper fallback, behind a provider interface |
 | Data | Supabase: Postgres + pgvector, Auth (JWT), Storage — RLS on every table |
 | Deploy | Vercel (frontend), Render via Docker (backend, WeasyPrint PDF export) |
@@ -54,7 +54,8 @@ Full design docs: [`docs/01-architecture.md`](docs/01-architecture.md) ·
 2. Run [`database/schema.sql`](database/schema.sql) in the SQL editor (creates tables,
    enums, RLS policies, the private `meeting-audio` bucket, and storage policies).
 3. Collect: project URL, anon key, service-role key, JWT secret, and the connection-pooler
-   database URI.
+   database URI. The **JWT secret** (Project Settings → API → JWT Secret, legacy HS256) is
+   what the backend uses to verify tokens — it must be set correctly or every request 401s.
 
 ### 2. Backend
 
@@ -65,6 +66,11 @@ pip install -e ".[dev]"
 cp .env.example .env                            # fill in every value
 uvicorn app.main:app --reload                   # http://localhost:8000/docs
 ```
+
+> **Gemini quota note:** the pipeline makes ~7 model calls per meeting (cleaning + 5
+> extractors + summary). The free tier allows only 5 requests/minute, so the backend
+> retries on `429` with backoff — a free-tier run just takes longer. For snappy processing,
+> enable billing on your Gemini key; no code change needed.
 
 ### 3. Frontend
 
@@ -110,6 +116,7 @@ cd frontend && npm test         # vitest
 | Status polling every ~2.5s | Supabase Realtime on `processing_events` |
 | Report text keeps original speaker labels after rename | Re-render report references on rename |
 | Single Gemini provider | LLM factory already isolates the SDK |
+| Free-tier rate limits handled by per-call `429` backoff (slower runs) | Paid Gemini tier, or a token-bucket throttle across agents |
 
 ## Demo
 

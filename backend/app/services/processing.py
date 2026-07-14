@@ -25,7 +25,6 @@ from app.repositories.reports import ReportRepository
 from app.repositories.transcripts import TranscriptRepository
 from app.services.storage import StorageClient
 from app.transcription.base import SegmentIn, get_provider
-import traceback
 
 logger = structlog.get_logger()
 
@@ -272,14 +271,7 @@ class ProcessingService:
                 await session.commit()
             await self._record(meeting_id, "embeddings", "succeeded")
         except Exception as exc:
-            print("\n" + "=" * 80)
-            print("EMBEDDINGS FAILED")
-            print("=" * 80)
-            traceback.print_exc()
-            print("=" * 80 + "\n")
-
-            log.exception("embeddings_failed")
-
+            log.warning("embeddings_failed", error=str(exc))
             await self._record(meeting_id, "embeddings", "failed", str(exc)[:500])
 
         # Phase 7 — done.
