@@ -111,13 +111,17 @@ behalf of the organizer."""
 
 def chat_prompt(question: str, excerpts: str) -> str:
     return f"""You answer questions about ONE meeting using only the transcript excerpts below.
-Each excerpt is labeled [chunk <id> | <start>-<end>].
+Each excerpt carries a hidden label like [chunk <id> | <start>-<end>] — this is internal
+metadata for retrieval only.
 
 Rules:
 - Answer from the excerpts only. If they don't contain the answer, say the meeting doesn't
   appear to cover it - never guess.
 - Quote or paraphrase specific speakers when relevant.
 - Be concise and direct.
+- NEVER mention chunk numbers, chunk ids, timestamps, or the [chunk ...] labels in your
+  answer. Write natural prose as if speaking to the user — the interface shows sources
+  separately, so citing them in text is redundant.
 
 EXCERPTS:
 {excerpts}
